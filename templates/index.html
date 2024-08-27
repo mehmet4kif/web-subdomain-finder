@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subdomain Brute Force Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin-top: 2rem;
+        }
+        h1 {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .domain-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .domain-title {
+            font-size: 1.25rem;
+            color: #343a40;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        .table {
+            margin-top: 1rem;
+        }
+        .table-dark th {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+        .form-control,
+        .form-check-input {
+            border-radius: 8px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-primary:focus, .btn-primary:active {
+            box-shadow: none;
+        }
+        .verbose-output {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .help-section {
+            margin-top: 2rem;
+        }
+        .help-section .accordion-button {
+            font-weight: bold;
+        }
+        .help-section .accordion-body {
+            background-color: #f8f9fa;
+        }
+        .help-section .accordion-item {
+            border: none;
+        }
+        .http-status {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: #ffffff;
+            justify-content: center;
+        }
+        .http-status-200 { background-color: #28a745; }
+        .http-status-301 { background-color: #17a2b8; }
+        .http-status-302 { background-color: #ffc107; }
+        .http-status-403 { background-color: #dc3545; }
+        .http-status-404 { background-color: #6c757d; }
+        .http-status-500 { background-color: #343a40; }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-message {
+            text-align: center;
+            font-size: 1.25rem;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Subdomain Brute Force Tool</h1>
+        <form id="main-form" method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="domains" class="form-label">Domains</label>
+                    <textarea class="form-control" id="domains" name="domains" rows="3" placeholder="example.com\nanotherdomain.com" required></textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="subdomains" class="form-label">Subdomain Listesi</label>
+                    <textarea class="form-control" id="subdomains" name="subdomains" rows="6" placeholder="www\nmail\nftp\nblog" required></textarea>
+                    <textarea class="default-subdomains" rows="6" style="display: none;">www
+mail
+ftp
+blog</textarea>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="verbose" name="verbose">
+                        <label class="form-check-label" for="verbose">
+                            Ayrıntılı Çıktı (Verbose)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Ara</button>
+        </form>
+
+        <div id="loading-container" style="display: none;">
+            <div class="loading-message">Tarama yapılıyor...</div>
+            <div class="loader"></div>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <!-- Sonuçlar buraya gelecek -->
+        </div>
+
+        <div id="verbose-container" class="verbose-output" style="display: none;">
+            <h3>Ayrıntılı Çıktı</h3>
+            <pre id="verbose-text"></pre>
+        </div>
+
+        <div class="help-section mt-5">
+            <div class="accordion" id="helpAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Yardım Merkezi
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            <h5>Nasıl Çalışır?</h5>
+                            <p>Bu araç, belirttiğiniz alan adı için olası subdomain'leri brute force yöntemiyle bulur. Ardından, bulunan subdomain'lerin IP adreslerini tespit eder ve HTTP istekleri göndererek yanıt kodlarını kontrol eder.</p>
+                            <h5>Örnek Senaryolar</h5>
+                            <ul>
+                                <li><strong>Senaryo 1:</strong> Bir şirketin tüm subdomain'lerini tarayarak hangi HTTP yanıt kodlarını döndürdüğünü öğrenmek istiyorsunuz.</li>
+                                <li><strong>Senaryo 2:</strong> Güvenlik testleri için belirli bir alan adı altında çalışabilecek tüm alt alanları belirlemek istiyorsunuz.</li>
+                            </ul>
+                            <h5>Yanıt Kodları:</h5>
+                            <ul>
+                                <li><span class="http-status http-status-200">200</span> - İsteğiniz başarılı oldu.</li>
+                                <li><span class="http-status http-status-301">301</span> - İçerik kalıcı olarak başka bir yere taşındı.</li>
+                                <li><span class="http-status http-status-302">302</span> - İçerik geçici olarak başka bir yerde bulunuyor.</li>
+                                <li><span class="http-status http-status-403">403</span> - Erişim yasaklandı.</li>
+                                <li><span class="http-status http-status-404">404</span> - Bulunamadı.</li>
+                                <li><span class="http-status http-status-500">500</span> - Sunucu Hatası.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('main-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            
+            const formData = new FormData(this);
+            const loadingContainer = document.getElementById('loading-container');
+            const resultsContainer = document.getElementById('results-container');
+            const verboseContainer = document.getElementById('verbose-container');
+            const verboseText = document.getElementById('verbose-text');
+
+            loadingContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            verboseContainer.style.display = 'none';
+
+            const response = await fetch('/start-scan', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            loadingContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+
+            if (data.verbose_output.length > 0) {
+                verboseContainer.style.display = 'block';
+                verboseText.textContent = data.verbose_output.join('\n');
+            } else {
+                verboseContainer.style.display = 'none';
+            }
+
+            resultsContainer.innerHTML = '';
+            for (const [domain, domainResults] of Object.entries(data.results)) {
+                const domainSection = document.createElement('div');
+                domainSection.classList.add('domain-section');
+                domainSection.innerHTML = `
+                    <div class="domain-title">${domain}</div>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Subdomain</th>
+                                <th>IP Adresi</th>
+                                <th>HTTP Yanıt Kodu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${domainResults.map(([subdomain, ip, status_code]) => `
+                            <tr>
+                                <td>${subdomain}</td>
+                                <td>${ip}</td>
+                                <td class="http-status http-status-${status_code}">
+                                    ${status_code || 'N/A'}
+                                </td>
+                            </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                resultsContainer.appendChild(domainSection);
+            }
+        });
+    </script>
+</body>
+</html>
