@@ -13,7 +13,7 @@ Bu proje, Flask kullanılarak geliştirilmiştir. Flask uygulamanızı başlatma
 
 1.  **Depoyu Klonlayın**
     
-        git clone https://github.com/username/subdomain-brute-force-tool.git
+        git clone https://github.com/mehmet4kif/web-wireshark.git
     
 2.  **Gerekli Python Paketlerini Yükleyin**
     
